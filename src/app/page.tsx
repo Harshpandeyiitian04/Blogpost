@@ -1,65 +1,127 @@
-import Image from "next/image";
+"use client"
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [title, setTitle] = useState<string>("")
+  const [content, setContent] = useState<string>("")
+  const [blogs, setBlogs] = useState<any[]>([])
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!title.trim() || !content.trim()) console.log("complete the data")
+    try {
+      let res = await axios.post("/api/create", { title, content })
+      setTitle("")
+      setContent("")
+      console.log("Blog Saved Successfully")
+    } catch (error) {
+      console.log("error in blog saving :", error)
+    }
+  }
+  async function handlePosts(e: React.FormEvent) {
+    try {
+
+      let res = await axios.get("/api/getblog")
+      setBlogs(res.data.blogs)
+    } catch (error) {
+      console.log("error in blog saving :", error)
+    }
+  }
+  async function handleDelete(id: number) {
+    try {
+
+      await axios.delete(`/api/delete/${id}`);
+      setBlogs(prev => prev.filter(b => b.id !== id))
+
+    } catch (error) {
+      console.log("error in blog saving :", error)
+    }
+  }
+  async function handleEdit(id: number) {
+    try {
+      const [blog] = blogs.filter(b => b.id === id)
+      const { title, content } = blog
+      setTitle(title)
+      setContent(content)
+      await axios.delete(`/api/delete/${id}`);
+      setBlogs(prev => prev.filter(b => b.id !== id))
+    } catch (error) {
+      console.log("error in blog editing :", error)
+    }
+  }
+  useEffect(() => {
+    handlePosts(new Event('submit') as any);
+  }, [handleSubmit])
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-6 md:p-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight">BlogNest</h1>
+            <h5 className="text-lg md:text-xl text-purple-200 font-light">Create your blogs here</h5>
+          </div>
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 mb-10 border border-white/20">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <input
+                type="text"
+                value={title}
+                className="w-full px-5 py-4 bg-white/20 border border-white/30 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent transition-all duration-300 text-lg"
+                key={"title"}
+                onChange={(t) => setTitle(t.target.value)}
+                placeholder="Enter the Title"
+              />
+              <textarea
+                value={content}
+                className="w-full px-5 py-4 bg-white/20 border border-white/30 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-4 focus:ring-purple-400 focus:border-transparent transition-all duration-300 h-40 resize-none text-base"
+                key={"content"}
+                onChange={(t) => setContent(t.target.value)}
+                placeholder="Enter the Content"
+              />
+              <button
+                type="submit"
+                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:scale-105 transition-all duration-300 text-lg"
+              >
+                Save
+              </button>
+            </form>
+          </div>
+          <div>
+            <h3 className="text-3xl font-bold text-white mb-8 text-center md:text-left">
+              Your Blog Posts
+            </h3>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {blogs.map(b => (
+                <div
+                  key={b.id}
+                  className="bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-6 border border-white/20 hover:shadow-2xl hover:shadow-purple-500/30 transform hover:-translate-y-2 transition-all duration-500 group"
+                >
+                  <div className="text-xl font-semibold text-white mb-3 group-hover:text-purple-300 transition-colors">
+                    {b.title}
+                  </div>
+                  <div className="text-gray-300 mb-5 line-clamp-3">
+                    {b.content}
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleEdit(b.id)}
+                      className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-lg shadow-md hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(b.id)}
+                      className="flex-1 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white font-medium rounded-lg shadow-md hover:shadow-red-500/50 transform hover:scale-105 transition-all duration-300"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
