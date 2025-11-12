@@ -185,4 +185,4 @@ If you want, I can also:
 - Add a one-step setup script to generate the client and run migrations
 - Add unit or integration tests for the API routes
 
-Happy coding!
+Author Harsh Pandey
